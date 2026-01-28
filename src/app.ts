@@ -9,6 +9,7 @@ import { corsOptionsDelegate } from './config';
 import { errorHandler } from './api/middleware';
 import path from 'path';
 import rateLimitMiddleware from './api/middleware/rateLimit.middleware';
+import apiRouter from './api/router';
 
 const app = express();
 
@@ -32,6 +33,9 @@ app.use('/api/health', (_, res) => {
         'Server is up and running'
     ).send(res);
 });
+
+// API Routes
+app.use('/api', apiRouter);
 
 app.use('*', (_, res) => {
     new NotFoundResponse('Route not found.').send(res);

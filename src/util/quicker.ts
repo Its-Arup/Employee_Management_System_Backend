@@ -1,5 +1,6 @@
 import os from 'os';
 import { ENV } from '../constant';
+import { Request, Response, NextFunction } from 'express';
 
 export const quicker = {
     getSystemHealth: () => {
@@ -19,4 +20,11 @@ export const quicker = {
             }
         };
     }
+};
+
+// Async error handler wrapper
+export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        Promise.resolve(fn(req, res, next)).catch(next);
+    };
 };
