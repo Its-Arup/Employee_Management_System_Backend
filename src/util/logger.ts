@@ -104,9 +104,6 @@ const MongodbTransport = (): Array<MongoDBTransportInstance> => {
             db: ENV.DB_URL,
             metaKey: 'meta',
             expireAfterSeconds: 3600 * 24 * 30,
-            options: {
-                useUnifiedTopology: true
-            },
             collection: 'application-logs'
         })
     ];

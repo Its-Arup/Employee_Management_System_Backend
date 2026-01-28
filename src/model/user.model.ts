@@ -57,10 +57,8 @@ const userSchema = new Schema(
     }
 );
 
-// Indexes for better query performance
-userSchema.index({ email: 1 });
+// Indexes for better query performance (email and employeeId already indexed via unique: true)
 userSchema.index({ status: 1 });
 userSchema.index({ roles: 1 });
-userSchema.index({ employeeId: 1 });
 
 export const userModel = model<UserDocument>('User', userSchema);
