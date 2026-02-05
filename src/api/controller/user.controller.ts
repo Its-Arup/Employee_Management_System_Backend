@@ -35,9 +35,10 @@ export class UserController {
                 username: user.username,
                 email: user.email,
                 displayName: user.displayName,
-                status: user.status
+                status: user.status,
+                isEmailVerified: user.isEmailVerified
             },
-            'Registration successful. Please wait for admin approval.'
+            'Registration successful. Please check your email to verify your account.'
         ).send(res);
     });
 
@@ -214,6 +215,35 @@ export class UserController {
         await userService.deleteUser(userId, adminId);
 
         new SuccessResponse(null, 'User deleted successfully').send(res);
+    });
+
+    /**
+     * Verify email with OTP
+     */
+    public verifyEmail = asyncHandler(async (req: Request, res: Response) => {
+        const { otp } = req.body as { otp: string };
+
+        const user = await userService.verifyEmail(otp);
+
+        new SuccessResponse(
+            {
+                userId: user._id,
+                email: user.email,
+                isEmailVerified: user.isEmailVerified
+            },
+            'Email verified successfully. Please wait for admin approval.'
+        ).send(res);
+    });
+
+    /**
+     * Resend verification email
+     */
+    public resendVerificationEmail = asyncHandler(async (req: Request, res: Response) => {
+        const { email } = req.body as { email: string };
+
+        await userService.resendVerificationEmail(email);
+
+        new SuccessResponse(null, 'Verification email sent successfully').send(res);
     });
 }
 

@@ -94,6 +94,14 @@ export const toggleUserStatusSchema = z.object({
     status: z.enum(['active', 'suspended'])
 });
 
+export const verifyEmailSchema = z.object({
+    otp: z.string().length(6, 'OTP must be exactly 6 digits').regex(/^\d{6}$/, 'OTP must contain only numbers')
+});
+
+export const resendVerificationEmailSchema = z.object({
+    email: z.string().email('Invalid email address')
+});
+
 // Export validation middleware
 export const validateLogin = validate(loginSchema);
 export const validateRefreshToken = validate(refreshTokenSchema);
@@ -104,3 +112,5 @@ export const validateApproveUser = validate(approveUserSchema);
 export const validateRejectUser = validate(rejectUserSchema);
 export const validateUpdateUserRoles = validate(updateUserRolesSchema);
 export const validateToggleUserStatus = validate(toggleUserStatusSchema);
+export const validateVerifyEmail = validate(verifyEmailSchema);
+export const validateResendVerificationEmail = validate(resendVerificationEmailSchema);

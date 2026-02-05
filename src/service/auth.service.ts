@@ -82,6 +82,24 @@ export class AuthService {
             throw new Error('Invalid email or password');
         }
 
+        // Check if email is verified
+        if (!user.isEmailVerified) {
+            await createAuditLog({
+                userId: toObjectId(String(user._id)),
+                performedBy: toObjectId(String(user._id)),
+                action: 'LOGIN_FAILED',
+                module: 'auth',
+                entityType: 'User',
+                status: 'failure',
+                errorMessage: 'Email not verified',
+                ipAddress,
+                userAgent,
+                metadata: { email }
+            });
+
+            throw new Error('Please verify your email before logging in. Check your email for the verification link.');
+        }
+
         // Check if user is active
         if (user.status !== 'active') {
             await createAuditLog({

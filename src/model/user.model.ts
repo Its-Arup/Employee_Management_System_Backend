@@ -18,6 +18,9 @@ export interface User {
     approvedBy?: Schema.Types.ObjectId;
     approvedAt?: Date;
     rejectionReason?: string;
+    isEmailVerified: boolean;
+    emailVerificationOTP?: string;
+    emailVerificationExpires?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -50,7 +53,10 @@ const userSchema = new Schema(
         employeeId: { type: String, unique: true, sparse: true },
         approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
         approvedAt: { type: Date },
-        rejectionReason: { type: String }
+        rejectionReason: { type: String },
+        isEmailVerified: { type: Boolean, default: false },
+        emailVerificationOTP: { type: String },
+        emailVerificationExpires: { type: Date }
     },
     {
         timestamps: true

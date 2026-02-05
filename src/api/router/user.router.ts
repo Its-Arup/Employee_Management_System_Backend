@@ -10,7 +10,9 @@ import {
     validateApproveUser,
     validateRejectUser,
     validateUpdateUserRoles,
-    validateToggleUserStatus
+    validateToggleUserStatus,
+    validateVerifyEmail,
+    validateResendVerificationEmail
 } from '../middleware';
 
 const router = Router();
@@ -22,6 +24,20 @@ const router = Router();
  * @access  Public
  */
 router.post('/register', validateRegister, userController.register);
+
+/**
+ * @route   POST /api/users/verify-email
+ * @desc    Verify email with OTP code
+ * @access  Public
+ */
+router.post('/verify-email', validateVerifyEmail, userController.verifyEmail);
+
+/**
+ * @route   POST /api/users/resend-verification
+ * @desc    Resend verification email
+ * @access  Public
+ */
+router.post('/resend-verification', validateResendVerificationEmail, userController.resendVerificationEmail);
 
 // Authenticated routes
 /**

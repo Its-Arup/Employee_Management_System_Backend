@@ -1,6 +1,8 @@
 import { userModel, type User, type UserDocument, createAuditLog } from '../model';
 import bcrypt from 'bcrypt';
 import { Schema } from 'mongoose';
+import { emailService } from './email.service';
+import { logger } from '../util';
 
 // Helper to convert to ObjectId
 const toObjectId = (id: string | Schema.Types.ObjectId): Schema.Types.ObjectId => {
@@ -35,13 +37,28 @@ export class UserService {
         // Hash password
         const passwordHash = await bcrypt.hash(userData.password, 12);
 
+        // Generate 6-digit OTP
+        const emailVerificationOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        const emailVerificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
         // Create user with pending status
         const user = await userModel.create({
             ...userData,
             passwordHash,
             status: 'pending',
-            roles: ['employee']
+            roles: ['employee'],
+            isEmailVerified: false,
+            emailVerificationOTP,
+            emailVerificationExpires
         });
+
+        // Send verification email
+        try {
+            await emailService.sendVerificationEmail(user.email, user.displayName, emailVerificationOTP);
+        } catch (error) {
+            logger.error('Failed to send verification email', { meta: error });
+            // Don't throw error, user can request resend
+        }
 
         // Create audit log
         await createAuditLog({
@@ -397,6 +414,82 @@ export class UserService {
 
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         return isMatch ? user : null;
+    }
+
+    /**
+     * Verify email with OTP
+     */
+    async verifyEmail(otp: string): Promise<UserDocument> {
+        const user = await userModel.findOne({
+            emailVerificationOTP: otp,
+            emailVerificationExpires: { $gt: new Date() }
+        });
+
+        if (!user) {
+            throw new Error('Invalid or expired OTP');
+        }
+
+        user.isEmailVerified = true;
+        user.emailVerificationOTP = undefined;
+        user.emailVerificationExpires = undefined;
+        await user.save();
+
+        // Send welcome email
+        try {
+            await emailService.sendWelcomeEmail(user.email, user.displayName);
+        } catch (error) {
+            logger.error('Failed to send welcome email', { meta: error });
+        }
+
+        // Create audit log
+        await createAuditLog({
+            userId: toObjectId(String(user._id)),
+            performedBy: toObjectId(String(user._id)),
+            action: 'EMAIL_VERIFIED',
+            module: 'auth',
+            entityType: 'User',
+            entityId: toObjectId(String(user._id)),
+            status: 'success'
+        });
+
+        return user;
+    }
+
+    /**
+     * Resend verification email
+     */
+    async resendVerificationEmail(email: string): Promise<void> {
+        const user = await userModel.findOne({ email });
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        if (user.isEmailVerified) {
+            throw new Error('Email is already verified');
+        }
+
+        // Generate new 6-digit OTP
+        const emailVerificationOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        const emailVerificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+        user.emailVerificationOTP = emailVerificationOTP;
+        user.emailVerificationExpires = emailVerificationExpires;
+        await user.save();
+
+        // Resend verification email
+        await emailService.resendVerificationEmail(user.email, user.displayName, emailVerificationOTP);
+
+        // Create audit log
+        await createAuditLog({
+            userId: toObjectId(String(user._id)),
+            performedBy: toObjectId(String(user._id)),
+            action: 'VERIFICATION_EMAIL_RESENT',
+            module: 'auth',
+            entityType: 'User',
+            entityId: toObjectId(String(user._id)),
+            status: 'success'
+        });
     }
 }
 
