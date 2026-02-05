@@ -1,13 +1,13 @@
-import { Document, model, Schema } from 'mongoose';
+import { Document, model, Schema, Types } from 'mongoose';
 import { logger } from '../util';
 
 export interface AuditLog {
-    userId: Schema.Types.ObjectId;
-    performedBy: Schema.Types.ObjectId;
+    userId: Types.ObjectId;
+    performedBy: Types.ObjectId;
     action: string;
     module: 'user' | 'attendance' | 'leave' | 'salary' | 'auth' | 'system';
     entityType: string;
-    entityId?: Schema.Types.ObjectId;
+    entityId?: Types.ObjectId;
     previousData?: Record<string, unknown>;
     newData?: Record<string, unknown>;
     changes?: {

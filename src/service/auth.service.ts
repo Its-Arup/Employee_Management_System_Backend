@@ -2,15 +2,7 @@ import jwt from 'jsonwebtoken';
 import { userService } from './user.service';
 import { ENV } from '../constant';
 import { createAuditLog, type UserDocument } from '../model';
-import { Schema } from 'mongoose';
-
-// Helper to convert to ObjectId
-const toObjectId = (id: string | Schema.Types.ObjectId): Schema.Types.ObjectId => {
-    if (typeof id === 'string') {
-        return new Schema.Types.ObjectId(id);
-    }
-    return id;
-};
+import { Types } from 'mongoose';
 
 export class AuthService {
     /**
@@ -68,7 +60,7 @@ export class AuthService {
         if (!user) {
             // Log failed attempt
             await createAuditLog({
-                performedBy: new Schema.Types.ObjectId('000000000000000000000000'),
+                performedBy: new Types.ObjectId('000000000000000000000000'),
                 action: 'LOGIN_FAILED',
                 module: 'auth',
                 entityType: 'User',
@@ -85,8 +77,8 @@ export class AuthService {
         // Check if email is verified
         if (!user.isEmailVerified) {
             await createAuditLog({
-                userId: toObjectId(String(user._id)),
-                performedBy: toObjectId(String(user._id)),
+                userId: new Types.ObjectId(String(user._id)),
+                performedBy: new Types.ObjectId(String(user._id)),
                 action: 'LOGIN_FAILED',
                 module: 'auth',
                 entityType: 'User',
@@ -103,8 +95,8 @@ export class AuthService {
         // Check if user is active
         if (user.status !== 'active') {
             await createAuditLog({
-                userId: toObjectId(String(user._id)),
-                performedBy: toObjectId(String(user._id)),
+                userId: new Types.ObjectId(String(user._id)),
+                performedBy: new Types.ObjectId(String(user._id)),
                 action: 'LOGIN_FAILED',
                 module: 'auth',
                 entityType: 'User',
@@ -126,8 +118,8 @@ export class AuthService {
 
         // Log successful login
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(String(user._id)),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(String(user._id)),
             action: 'LOGIN_SUCCESS',
             module: 'auth',
             entityType: 'User',
@@ -195,8 +187,8 @@ export class AuthService {
     async logout(userId: string, ipAddress?: string, userAgent?: string): Promise<void> {
         // Log logout
         await createAuditLog({
-            userId: toObjectId(userId),
-            performedBy: toObjectId(userId),
+            userId: new Types.ObjectId(userId),
+            performedBy: new Types.ObjectId(userId),
             action: 'LOGOUT',
             module: 'auth',
             entityType: 'User',

@@ -1,16 +1,8 @@
 import { userModel, type User, type UserDocument, createAuditLog } from '../model';
 import bcrypt from 'bcrypt';
-import { Schema } from 'mongoose';
+import { Types } from 'mongoose';
 import { emailService } from './email.service';
 import { logger } from '../util';
-
-// Helper to convert to ObjectId
-const toObjectId = (id: string | Schema.Types.ObjectId): Schema.Types.ObjectId => {
-    if (typeof id === 'string') {
-        return new Schema.Types.ObjectId(id);
-    }
-    return id;
-};
 
 export class UserService {
     /**
@@ -62,12 +54,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(String(user._id)),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(String(user._id)),
             action: 'USER_REGISTRATION',
             module: 'user',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success',
             newData: {
                 username: user.username,
@@ -106,7 +98,7 @@ export class UserService {
         // Update user
         user.status = 'active';
         user.roles = assignedRoles;
-        user.approvedBy = toObjectId(adminId);
+        user.approvedBy = new Types.ObjectId(adminId);
         user.approvedAt = new Date();
 
         if (employeeId) user.employeeId = employeeId;
@@ -118,12 +110,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(adminId),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(adminId),
             action: 'USER_APPROVED',
             module: 'user',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success',
             previousData: { status: previousData.status },
             newData: {
@@ -156,19 +148,19 @@ export class UserService {
 
         user.status = 'rejected';
         user.rejectionReason = reason;
-        user.approvedBy = toObjectId(adminId);
+        user.approvedBy = new Types.ObjectId(adminId);
         user.approvedAt = new Date();
 
         await user.save();
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(adminId),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(adminId),
             action: 'USER_REJECTED',
             module: 'user',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success',
             previousData: { status: previousData.status },
             newData: { status: user.status, rejectionReason: reason }
@@ -271,12 +263,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(updatedBy),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(updatedBy),
             action: 'USER_UPDATED',
             module: 'user',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success',
             previousData: JSON.parse(JSON.stringify(previousData)) as Record<string, unknown>,
             newData: updateData as Record<string, unknown>
@@ -307,12 +299,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(String(user._id)),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(String(user._id)),
             action: 'PASSWORD_CHANGED',
             module: 'auth',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success'
         });
     }
@@ -333,12 +325,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(adminId),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(adminId),
             action: status === 'suspended' ? 'USER_SUSPENDED' : 'USER_ACTIVATED',
             module: 'user',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success',
             previousData: { status: previousStatus },
             newData: { status }
@@ -361,12 +353,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(adminId),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(adminId),
             action: 'USER_DELETED',
             module: 'user',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success',
             previousData: JSON.parse(JSON.stringify(user.toObject())) as Record<string, unknown>
         });
@@ -388,12 +380,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(adminId),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(adminId),
             action: 'USER_ROLES_UPDATED',
             module: 'user',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success',
             previousData: { roles: previousRoles },
             newData: { roles }
@@ -443,12 +435,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(String(user._id)),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(String(user._id)),
             action: 'EMAIL_VERIFIED',
             module: 'auth',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success'
         });
 
@@ -482,12 +474,12 @@ export class UserService {
 
         // Create audit log
         await createAuditLog({
-            userId: toObjectId(String(user._id)),
-            performedBy: toObjectId(String(user._id)),
+            userId: new Types.ObjectId(String(user._id)),
+            performedBy: new Types.ObjectId(String(user._id)),
             action: 'VERIFICATION_EMAIL_RESENT',
             module: 'auth',
             entityType: 'User',
-            entityId: toObjectId(String(user._id)),
+            entityId: new Types.ObjectId(String(user._id)),
             status: 'success'
         });
     }

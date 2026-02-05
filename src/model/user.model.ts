@@ -1,4 +1,4 @@
-import { Document, model, Schema } from 'mongoose';
+import { Document, model, Schema, Types } from 'mongoose';
 
 export interface User {
     username: string;
@@ -15,7 +15,7 @@ export interface User {
     address?: string;
     joiningDate?: Date;
     employeeId?: string;
-    approvedBy?: Schema.Types.ObjectId;
+    approvedBy?: Types.ObjectId;
     approvedAt?: Date;
     rejectionReason?: string;
     isEmailVerified: boolean;
