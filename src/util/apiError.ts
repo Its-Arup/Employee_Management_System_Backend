@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { AccessTokenErrorResponse, AuthFailureResponse, BadRequestErrorResponse, InternalErrorResponse, NotFoundResponse } from './apiResponse';
+import { AccessTokenErrorResponse, AuthFailureResponse, BadRequestErrorResponse, InternalErrorResponse, NotFoundResponse, ForbiddenResponse } from './apiResponse';
 import { ENV } from '../constant';
 import { ApplicationEnvironment } from '../types';
 
@@ -31,7 +31,7 @@ export abstract class ApiError extends Error {
             case ErrorType.NOT_FOUND:
                 return new NotFoundResponse(err.message).send(res);
             case ErrorType.FORBIDDEN:
-                return new NotFoundResponse(err.message).send(res);
+                return new ForbiddenResponse(err.message).send(res);
             case ErrorType.BAD_REQUEST:
                 return new BadRequestErrorResponse(err.message).send(res);
             default: {

@@ -3,6 +3,7 @@ import { userService } from './user.service';
 import { ENV } from '../constant';
 import { createAuditLog, type UserDocument } from '../model';
 import { Types } from 'mongoose';
+import { AuthFailureError, ForbiddenError, BadRequestError } from '../util';
 
 export class AuthService {
     /**
@@ -71,7 +72,7 @@ export class AuthService {
                 metadata: { email }
             });
 
-            throw new Error('Invalid email or password');
+            throw new AuthFailureError('Invalid email or password');
         }
 
         // Check if email is verified
@@ -89,7 +90,7 @@ export class AuthService {
                 metadata: { email }
             });
 
-            throw new Error('Please verify your email before logging in. Check your email for the verification link.');
+            throw new BadRequestError('Please verify your email before logging in. Check your email for the verification link.');
         }
 
         // Check if user is active
@@ -107,7 +108,7 @@ export class AuthService {
                 metadata: { email, status: user.status }
             });
 
-            throw new Error(
+            throw new ForbiddenError(
                 `Your account is ${user.status}. ${user.status === 'pending' ? 'Please wait for admin approval.' : 'Please contact administrator.'}`
             );
         }
@@ -161,11 +162,11 @@ export class AuthService {
             const user = await userService.getUserById(decoded.id);
 
             if (!user) {
-                throw new Error('User not found');
+                throw new AuthFailureError('User not found');
             }
 
             if (user.status !== 'active') {
-                throw new Error('Account is not active');
+                throw new ForbiddenError('Account is not active');
             }
 
             // Generate new tokens
@@ -176,8 +177,11 @@ export class AuthService {
                 accessToken: newAccessToken,
                 refreshToken: newRefreshToken
             };
-        } catch {
-            throw new Error('Invalid or expired refresh token');
+        } catch (error) {
+            if (error instanceof AuthFailureError || error instanceof ForbiddenError) {
+                throw error;
+            }
+            throw new AuthFailureError('Invalid or expired refresh token');
         }
     }
 
@@ -209,7 +213,7 @@ export class AuthService {
                 roles?: string[];
             };
         } catch {
-            throw new Error('Invalid or expired token');
+            throw new AuthFailureError('Invalid or expired token');
         }
     }
 }
