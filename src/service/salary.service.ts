@@ -63,11 +63,14 @@ export class SalaryService {
 
         // Create audit log
         await auditLogModel.create({
-            userId: new Types.ObjectId(createdById),
+            userId: new Types.ObjectId(userId),
+            performedBy: new Types.ObjectId(createdById),
             action: 'SALARY_CREATED',
-            entity: 'Salary',
+            module: 'salary',
+            entityType: 'Salary',
             entityId: salary._id,
-            details: {
+            status: 'success',
+            metadata: {
                 employeeId: userId,
                 month,
                 year,
@@ -219,11 +222,14 @@ export class SalaryService {
 
         // Create audit log
         await auditLogModel.create({
-            userId: new Types.ObjectId(updatedById),
+            userId: salary.userId,
+            performedBy: new Types.ObjectId(updatedById),
             action: 'SALARY_STATUS_UPDATED',
-            entity: 'Salary',
+            module: 'salary',
+            entityType: 'Salary',
             entityId: salary._id,
-            details: {
+            status: 'success',
+            metadata: {
                 employeeId: salary.userId,
                 status
             }
@@ -265,11 +271,14 @@ export class SalaryService {
 
         // Create audit log
         await auditLogModel.create({
-            userId: new Types.ObjectId(processedById),
+            userId: salary.userId,
+            performedBy: new Types.ObjectId(processedById),
             action: 'SALARY_PAID',
-            entity: 'Salary',
+            module: 'salary',
+            entityType: 'Salary',
             entityId: salary._id,
-            details: {
+            status: 'success',
+            metadata: {
                 employeeId: salary.userId,
                 paymentMethod,
                 transactionId,
@@ -326,11 +335,14 @@ export class SalaryService {
 
         // Create audit log
         await auditLogModel.create({
-            userId: new Types.ObjectId(updatedById),
+            userId: salary.userId,
+            performedBy: new Types.ObjectId(updatedById),
             action: 'SALARY_UPDATED',
-            entity: 'Salary',
+            module: 'salary',
+            entityType: 'Salary',
             entityId: salary._id,
-            details: {
+            status: 'success',
+            metadata: {
                 employeeId: salary.userId,
                 updates: Object.keys(updateData)
             }
@@ -357,11 +369,14 @@ export class SalaryService {
 
         // Create audit log
         await auditLogModel.create({
-            userId: new Types.ObjectId(deletedById),
+            userId: salary.userId,
+            performedBy: new Types.ObjectId(deletedById),
             action: 'SALARY_DELETED',
-            entity: 'Salary',
+            module: 'salary',
+            entityType: 'Salary',
             entityId: salary._id,
-            details: {
+            status: 'success',
+            metadata: {
                 employeeId: salary.userId,
                 month: salary.month,
                 year: salary.year

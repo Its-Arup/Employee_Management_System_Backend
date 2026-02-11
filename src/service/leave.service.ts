@@ -99,10 +99,13 @@ export class LeaveService {
         // Create audit log
         await auditLogModel.create({
             userId: new Types.ObjectId(userId),
+            performedBy: new Types.ObjectId(userId),
             action: 'LEAVE_APPLIED',
-            entity: 'Leave',
+            module: 'leave',
+            entityType: 'Leave',
             entityId: leave._id,
-            details: {
+            status: 'success',
+            metadata: {
                 leaveType,
                 startDate: start,
                 endDate: end,
@@ -276,11 +279,14 @@ export class LeaveService {
 
         // Create audit log
         await auditLogModel.create({
-            userId: new Types.ObjectId(reviewerId),
+            userId: leave.userId,
+            performedBy: new Types.ObjectId(reviewerId),
             action: 'LEAVE_APPROVED',
-            entity: 'Leave',
+            module: 'leave',
+            entityType: 'Leave',
             entityId: leave._id,
-            details: {
+            status: 'success',
+            metadata: {
                 leaveId: leave._id,
                 employeeId: leave.userId,
                 remarks
@@ -313,11 +319,14 @@ export class LeaveService {
 
         // Create audit log
         await auditLogModel.create({
-            userId: new Types.ObjectId(reviewerId),
+            userId: leave.userId,
+            performedBy: new Types.ObjectId(reviewerId),
             action: 'LEAVE_REJECTED',
-            entity: 'Leave',
+            module: 'leave',
+            entityType: 'Leave',
             entityId: leave._id,
-            details: {
+            status: 'success',
+            metadata: {
                 leaveId: leave._id,
                 employeeId: leave.userId,
                 remarks
@@ -370,10 +379,13 @@ export class LeaveService {
         // Create audit log
         await auditLogModel.create({
             userId: new Types.ObjectId(userId),
+            performedBy: new Types.ObjectId(userId),
             action: 'LEAVE_CANCELLED',
-            entity: 'Leave',
+            module: 'leave',
+            entityType: 'Leave',
             entityId: leave._id,
-            details: {
+            status: 'success',
+            metadata: {
                 leaveId: leave._id
             }
         });
