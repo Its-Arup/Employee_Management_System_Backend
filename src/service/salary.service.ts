@@ -3,6 +3,7 @@ import { salaryModel, SalaryStructure } from '../model/salary.model';
 import { userModel } from '../model/user.model';
 import { BadRequestError, NotFoundError } from '../util/apiError';
 import { auditLogModel } from '../model/auditLog.model';
+import { emailService } from './email.service';
 
 export class SalaryService {
     /**
@@ -211,12 +212,13 @@ export class SalaryService {
         status: 'pending' | 'processed' | 'paid' | 'on-hold',
         updatedById: string
     ) {
-        const salary = await salaryModel.findById(salaryId);
+        const salary = await salaryModel.findById(salaryId).populate('userId', 'email displayName');
 
         if (!salary) {
             throw new NotFoundError('Salary record not found');
         }
 
+        const previousStatus = salary.status;
         salary.status = status;
 
         if (status === 'processed') {
@@ -241,6 +243,25 @@ export class SalaryService {
             }
         });
 
+        // Send email notification when status changes to paid
+        if (status === 'paid' && previousStatus !== 'paid') {
+            const user = salary.userId as any;
+            if (user && user.email && user.displayName) {
+                await emailService.sendSalaryPaidEmail(
+                    user.email,
+                    user.displayName,
+                    {
+                        month: salary.month,
+                        year: salary.year,
+                        netSalary: salary.netSalary,
+                        grossSalary: salary.grossSalary,
+                        totalDeductions: salary.totalDeductions,
+                        creditDate: salary.creditDate
+                    }
+                );
+            }
+        }
+
         return salary;
     }
 
@@ -255,7 +276,7 @@ export class SalaryService {
         actualCreditDate?: Date,
         remarks?: string
     ) {
-        const salary = await salaryModel.findById(salaryId);
+        const salary = await salaryModel.findById(salaryId).populate('userId', 'email displayName');
 
         if (!salary) {
             throw new NotFoundError('Salary record not found');
@@ -291,6 +312,23 @@ export class SalaryService {
                 amount: salary.netSalary
             }
         });
+
+        // Send email notification
+        const user = salary.userId as any;
+        if (user && user.email && user.displayName) {
+            await emailService.sendSalaryPaidEmail(
+                user.email,
+                user.displayName,
+                {
+                    month: salary.month,
+                    year: salary.year,
+                    netSalary: salary.netSalary,
+                    grossSalary: salary.grossSalary,
+                    totalDeductions: salary.totalDeductions,
+                    creditDate: salary.actualCreditDate || salary.creditDate
+                }
+            );
+        }
 
         return salary;
     }

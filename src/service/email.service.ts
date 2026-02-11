@@ -242,6 +242,100 @@ export class EmailService {
             // Don't throw error as rejection is already done
         }
     }
+
+    /**
+     * Send salary paid notification email
+     */
+    async sendSalaryPaidEmail(
+        email: string,
+        displayName: string,
+        salaryDetails: {
+            month: number;
+            year: number;
+            netSalary: number;
+            grossSalary: number;
+            totalDeductions: number;
+            creditDate?: Date;
+        }
+    ): Promise<void> {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthName = monthNames[salaryDetails.month - 1];
+
+        const mailOptions = {
+            from: `"${ENV.EMAIL_FROM_NAME}" <${ENV.EMAIL_FROM}>`,
+            to: email,
+            subject: `Salary Paid - ${monthName} ${salaryDetails.year}`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+                        .content { background-color: #f9f9f9; padding: 30px; border-radius: 5px; margin-top: 20px; }
+                        .salary-box { background-color: #fff; border: 2px solid #4CAF50; padding: 20px; margin: 20px 0; border-radius: 5px; }
+                        .salary-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+                        .salary-row:last-child { border-bottom: none; }
+                        .label { font-weight: normal; color: #666; }
+                        .value { font-weight: bold; color: #333; }
+                        .net-salary { background-color: #4CAF50; color: white; padding: 15px; text-align: center; border-radius: 5px; margin-top: 20px; }
+                        .net-amount { font-size: 28px; font-weight: bold; }
+                        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>💰 Salary Payment Confirmation</h1>
+                        </div>
+                        <div class="content">
+                            <h2>Hello ${displayName},</h2>
+                            <p>Your salary for <strong>${monthName} ${salaryDetails.year}</strong> has been processed and paid.</p>
+                            
+                            <div class="salary-box">
+                                <div class="salary-row">
+                                    <span class="label">Gross Salary:</span>
+                                    <span class="value">₹${salaryDetails.grossSalary.toLocaleString()}</span>
+                                </div>
+                                <div class="salary-row">
+                                    <span class="label">Total Deductions:</span>
+                                    <span class="value" style="color: #f44336;">-₹${salaryDetails.totalDeductions.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <div class="net-salary">
+                                <p style="margin: 0; font-size: 16px;">Net Salary Paid</p>
+                                <p class="net-amount" style="margin: 10px 0 0 0;">₹${salaryDetails.netSalary.toLocaleString()}</p>
+                            </div>
+
+                            ${salaryDetails.creditDate ? `<p style="text-align: center; margin-top: 20px; color: #666;">Credit Date: ${new Date(salaryDetails.creditDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>` : ''}
+
+                            <p style="margin-top: 30px;">You can view the complete salary breakdown and download your salary slip by logging into the Employee Management System.</p>
+                            
+                            <div style="text-align: center; margin-top: 20px;">
+                                <a href="${ENV.FRONTEND_URL || 'http://localhost:5173'}/salaries" style="display: inline-block; background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px;">View Salary Details</a>
+                            </div>
+
+                            <p style="margin-top: 30px;">If you have any questions regarding your salary, please contact the HR department.</p>
+                        </div>
+                        <div class="footer">
+                            <p>&copy; ${new Date().getFullYear()} Employee Management System. All rights reserved.</p>
+                            <p>This is an automated email. Please do not reply.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        try {
+            await this.transporter.sendMail(mailOptions);
+        } catch (error) {
+            logger.error('Error sending salary paid email', { meta: error });
+            // Don't throw error as salary is already marked as paid
+        }
+    }
 }
 
 export const emailService = new EmailService();
