@@ -13,6 +13,9 @@ export class SalaryService {
         month: number,
         year: number,
         structure: SalaryStructure,
+        grossSalary: number,
+        totalDeductions: number,
+        netSalary: number,
         workingDays: number,
         presentDays: number,
         leaveDays: number,
@@ -50,6 +53,9 @@ export class SalaryService {
             month,
             year,
             structure,
+            grossSalary,
+            totalDeductions,
+            netSalary,
             workingDays,
             presentDays,
             leaveDays,
@@ -506,11 +512,29 @@ export class SalaryService {
                     otherDeductions: 0
                 };
 
+                // Calculate gross, deductions, and net
+                const grossSalary = (defaultStructure.basic || 0) + 
+                    (defaultStructure.hra || 0) + 
+                    (defaultStructure.medicalAllowance || 0) + 
+                    (defaultStructure.transportAllowance || 0) + 
+                    (defaultStructure.otherAllowances || 0) + 
+                    (defaultStructure.bonus || 0);
+                
+                const totalDeductions = (defaultStructure.providentFund || 0) + 
+                    (defaultStructure.professionalTax || 0) + 
+                    (defaultStructure.incomeTax || 0) + 
+                    (defaultStructure.otherDeductions || 0);
+                
+                const netSalary = grossSalary - totalDeductions;
+
                 await this.createSalary(
                     String(employee._id),
                     month,
                     year,
                     defaultStructure,
+                    grossSalary,
+                    totalDeductions,
+                    netSalary,
                     30, // working days
                     30, // present days (will need actual attendance data)
                     0, // leave days

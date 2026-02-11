@@ -16,6 +16,9 @@ export class SalaryController {
             month,
             year,
             structure,
+            grossSalary,
+            totalDeductions,
+            netSalary,
             workingDays,
             presentDays,
             leaveDays,
@@ -28,6 +31,9 @@ export class SalaryController {
             month: number;
             year: number;
             structure: SalaryStructure;
+            grossSalary: number;
+            totalDeductions: number;
+            netSalary: number;
             workingDays: number;
             presentDays: number;
             leaveDays: number;
@@ -42,6 +48,9 @@ export class SalaryController {
             month,
             year,
             structure,
+            grossSalary,
+            totalDeductions,
+            netSalary,
             workingDays,
             presentDays,
             leaveDays,
