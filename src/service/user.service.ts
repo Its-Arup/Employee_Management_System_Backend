@@ -108,6 +108,14 @@ export class UserService {
 
         await user.save();
 
+        // Send approval email to user
+        try {
+            await emailService.sendApprovalEmail(user.email, user.displayName, user.roles, user.employeeId);
+        } catch (error) {
+            logger.error('Failed to send approval email', { meta: error });
+            // Don't throw error, approval is already done
+        }
+
         // Create audit log
         await createAuditLog({
             userId: new Types.ObjectId(String(user._id)),
@@ -152,6 +160,14 @@ export class UserService {
         user.approvedAt = new Date();
 
         await user.save();
+
+        // Send rejection email to user
+        try {
+            await emailService.sendRejectionEmail(user.email, user.displayName, reason);
+        } catch (error) {
+            logger.error('Failed to send rejection email', { meta: error });
+            // Don't throw error, rejection is already done
+        }
 
         // Create audit log
         await createAuditLog({
