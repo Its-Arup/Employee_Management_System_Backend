@@ -16,7 +16,7 @@
       "migrate:email-verification": "cross-env NODE_ENV=development node script/migrate-email-verification.js"
    },
    "keywords": [],
-   "author": "aman9723",
+   "author": "its_Arup",
    "license": "ISC",
    "description": "",
    "dependencies": {
