@@ -6,6 +6,7 @@
       "build": "npx tsc",
       "dev": "cross-env NODE_ENV=development nodemon --legacy-watch src/index.ts",
       "start": "cross-env NODE_ENV=production node dist/index.js",
+      "start:prod": "npm run build && npm start",
       "lint": "eslint .",
       "lint:fix": "eslint . --fix",
       "format:check": "prettier . --check",
