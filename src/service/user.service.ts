@@ -44,13 +44,11 @@ export class UserService {
             emailVerificationExpires
         });
 
-        // Send verification email
-        try {
-            await emailService.sendVerificationEmail(user.email, user.displayName, emailVerificationOTP);
-        } catch (error) {
-            logger.error('Failed to send verification email', { meta: error });
-            // Don't throw error, user can request resend
-        }
+        // Send verification email asynchronously (non-blocking)
+        emailService.sendVerificationEmail(user.email, user.displayName, emailVerificationOTP)
+            .catch(error => {
+                logger.error('Failed to send verification email', { meta: error });
+            });
 
         // Create audit log
         await createAuditLog({
@@ -108,13 +106,11 @@ export class UserService {
 
         await user.save();
 
-        // Send approval email to user
-        try {
-            await emailService.sendApprovalEmail(user.email, user.displayName, user.roles, user.employeeId);
-        } catch (error) {
-            logger.error('Failed to send approval email', { meta: error });
-            // Don't throw error, approval is already done
-        }
+        // Send approval email to user asynchronously (non-blocking)
+        emailService.sendApprovalEmail(user.email, user.displayName, user.roles, user.employeeId)
+            .catch(error => {
+                logger.error('Failed to send approval email', { meta: error });
+            });
 
         // Create audit log
         await createAuditLog({
@@ -161,13 +157,11 @@ export class UserService {
 
         await user.save();
 
-        // Send rejection email to user
-        try {
-            await emailService.sendRejectionEmail(user.email, user.displayName, reason);
-        } catch (error) {
-            logger.error('Failed to send rejection email', { meta: error });
-            // Don't throw error, rejection is already done
-        }
+        // Send rejection email to user asynchronously (non-blocking)
+        emailService.sendRejectionEmail(user.email, user.displayName, reason)
+            .catch(error => {
+                logger.error('Failed to send rejection email', { meta: error });
+            });
 
         // Create audit log
         await createAuditLog({
@@ -442,12 +436,11 @@ export class UserService {
         user.emailVerificationExpires = undefined;
         await user.save();
 
-        // Send welcome email
-        try {
-            await emailService.sendWelcomeEmail(user.email, user.displayName);
-        } catch (error) {
-            logger.error('Failed to send welcome email', { meta: error });
-        }
+        // Send welcome email asynchronously (non-blocking)
+        emailService.sendWelcomeEmail(user.email, user.displayName)
+            .catch(error => {
+                logger.error('Failed to send welcome email', { meta: error });
+            });
 
         // Create audit log
         await createAuditLog({
@@ -485,8 +478,11 @@ export class UserService {
         user.emailVerificationExpires = emailVerificationExpires;
         await user.save();
 
-        // Resend verification email
-        await emailService.resendVerificationEmail(user.email, user.displayName, emailVerificationOTP);
+        // Resend verification email asynchronously (non-blocking)
+        emailService.resendVerificationEmail(user.email, user.displayName, emailVerificationOTP)
+            .catch(error => {
+                logger.error('Failed to resend verification email', { meta: error });
+            });
 
         // Create audit log
         await createAuditLog({
