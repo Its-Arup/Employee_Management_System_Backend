@@ -2,7 +2,7 @@ import { CorsOptionsDelegate, CorsRequest } from 'cors';
 import { ENV } from '../constant';
 import { ApplicationEnvironment } from '../types';
 
-export const allowList = ['http://localhost:3000'];
+export const allowList = ['http://localhost:3000', 'http://localhost:5173', 'https://employee-management-system-lime-iota.vercel.app'];
 
 if (ENV.ENVIORNMENT === ApplicationEnvironment.PRODUCTION) {
     allowList.shift();
