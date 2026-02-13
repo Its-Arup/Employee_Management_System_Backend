@@ -18,11 +18,16 @@ export class EmailService {
             pool: true,
             maxConnections: 5,
             maxMessages: 100,
-            connectionTimeout: 10000, // 10 seconds
-            greetingTimeout: 5000, // 5 seconds
-            socketTimeout: 15000, // 15 seconds
+            connectionTimeout: 60000, // 60 seconds - increased for Render
+            greetingTimeout: 40000, // 40 seconds - increased for Render
+            socketTimeout: 60000, // 60 seconds - increased for Render
             // Force IPv4 - Render doesn't support IPv6 properly
-            family: 4
+            family: 4,
+            // Additional options for better reliability
+            tls: {
+                rejectUnauthorized: true,
+                minVersion: 'TLSv1.2'
+            }
         } as nodemailer.TransportOptions);
     }
 
