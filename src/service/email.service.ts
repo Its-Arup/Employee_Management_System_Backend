@@ -20,8 +20,10 @@ export class EmailService {
             maxMessages: 100,
             connectionTimeout: 10000, // 10 seconds
             greetingTimeout: 5000, // 5 seconds
-            socketTimeout: 15000 // 15 seconds
-        });
+            socketTimeout: 15000, // 15 seconds
+            // Force IPv4 - Render doesn't support IPv6 properly
+            family: 4
+        } as nodemailer.TransportOptions);
     }
 
     /**
