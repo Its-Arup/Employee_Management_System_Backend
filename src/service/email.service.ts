@@ -13,8 +13,29 @@ export class EmailService {
             auth: {
                 user: ENV.EMAIL_USER,
                 pass: ENV.EMAIL_PASSWORD
-            }
+            },
+            // Connection pool and timeout settings for better performance on Render
+            pool: true,
+            maxConnections: 5,
+            maxMessages: 100,
+            connectionTimeout: 10000, // 10 seconds
+            greetingTimeout: 5000, // 5 seconds
+            socketTimeout: 15000 // 15 seconds
         });
+    }
+
+    /**
+     * Verify SMTP connection
+     */
+    async verifyConnection(): Promise<boolean> {
+        try {
+            await this.transporter.verify();
+            logger.info('SMTP connection verified successfully');
+            return true;
+        } catch (error) {
+            logger.error('SMTP connection verification failed', { meta: error });
+            return false;
+        }
     }
 
     /**
@@ -66,10 +87,23 @@ export class EmailService {
         };
 
         try {
-            await this.transporter.sendMail(mailOptions);
+            const info = await this.transporter.sendMail(mailOptions);
+            logger.info('Verification email sent successfully', { 
+                meta: { 
+                    email, 
+                    messageId: info.messageId,
+                    response: info.response 
+                } 
+            });
         } catch (error) {
-            logger.error('Error sending verification email', { meta: error });
-            throw new Error('Failed to send verification email');
+            logger.error('Error sending verification email', { 
+                meta: { 
+                    error, 
+                    email,
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error'
+                } 
+            });
+            throw new Error(`Failed to send verification email: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 

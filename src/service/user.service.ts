@@ -44,11 +44,22 @@ export class UserService {
             emailVerificationExpires
         });
 
-        // Send verification email asynchronously (non-blocking)
-        emailService.sendVerificationEmail(user.email, user.displayName, emailVerificationOTP)
-            .catch(error => {
-                logger.error('Failed to send verification email', { meta: error });
+        // Send verification email - await it to ensure it's sent
+        try {
+            await emailService.sendVerificationEmail(user.email, user.displayName, emailVerificationOTP);
+            logger.info('Verification email sent successfully', { meta: { email: user.email } });
+        } catch (error) {
+            logger.error('Failed to send verification email', { 
+                meta: { 
+                    error, 
+                    email: user.email,
+                    userId: user._id 
+                } 
             });
+            // Delete the user if email fails to send
+            await userModel.findByIdAndDelete(user._id);
+            throw new Error('Failed to send verification email. Please try again or contact support if the problem persists.');
+        }
 
         // Create audit log
         await createAuditLog({
@@ -478,11 +489,19 @@ export class UserService {
         user.emailVerificationExpires = emailVerificationExpires;
         await user.save();
 
-        // Resend verification email asynchronously (non-blocking)
-        emailService.resendVerificationEmail(user.email, user.displayName, emailVerificationOTP)
-            .catch(error => {
-                logger.error('Failed to resend verification email', { meta: error });
+        // Resend verification email - await it to ensure it's sent
+        try {
+            await emailService.resendVerificationEmail(user.email, user.displayName, emailVerificationOTP);
+            logger.info('Verification email resent successfully', { meta: { email: user.email } });
+        } catch (error) {
+            logger.error('Failed to resend verification email', { 
+                meta: { 
+                    error, 
+                    email: user.email 
+                } 
             });
+            throw new Error('Failed to send verification email. Please try again or contact support if the problem persists.');
+        }
 
         // Create audit log
         await createAuditLog({
