@@ -1,7 +1,11 @@
 import DotenvFlow from 'dotenv-flow';
 import { env } from 'process';
 
-DotenvFlow.config();
+// Load .env files in development only
+// In production (Render), env vars come from dashboard - silence warnings
+DotenvFlow.config({
+    silent: env.NODE_ENV === 'production'
+});
 
 export const ENV = {
     ENVIORNMENT: env.NODE_ENV,
