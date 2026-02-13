@@ -2,7 +2,7 @@ import { userModel, type User, type UserDocument, createAuditLog } from '../mode
 import bcrypt from 'bcrypt';
 import { Types } from 'mongoose';
 import { emailService } from './email.service';
-import { logger } from '../util';
+import { logger, BadRequestError, InternalError } from '../util';
 
 export class UserService {
     /**
@@ -23,7 +23,7 @@ export class UserService {
         });
 
         if (existingUser) {
-            throw new Error('User with this email or username already exists');
+            throw new BadRequestError('User with this email or username already exists');
         }
 
         // Hash password
@@ -58,7 +58,7 @@ export class UserService {
             });
             // Delete the user if email fails to send
             await userModel.findByIdAndDelete(user._id);
-            throw new Error('Failed to send verification email. Please try again or contact support if the problem persists.');
+            throw new InternalError('Failed to send verification email. Please check your email configuration or try again later.');
         }
 
         // Create audit log
