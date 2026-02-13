@@ -36,20 +36,48 @@ app.use('/api/health', (_, res) => {
 });
 
 // Email service test endpoint
-app.use('/api/test-email', async (_, res) => {
+app.use('/api/test-email', async (req, res) => {
     try {
+        const startTime = Date.now();
+        
+        // Test 1: Verify connection
+        const verifyStart = Date.now();
         const isConnected = await emailService.verifyConnection();
+        const verifyTime = Date.now() - verifyStart;
+
+        // Test 2: Send actual test email (optional - only if email param provided)
+        let sendTest = null;
+        const testEmailAddress = req.query.email as string || process.env.EMAIL_USER;
+        
+        if (testEmailAddress && isConnected) {
+            sendTest = await emailService.sendTestEmail(testEmailAddress);
+        }
+
+        const totalTime = Date.now() - startTime;
+
         new SuccessResponse(
             {
-                emailService: isConnected ? 'connected' : 'failed',
+                timestamp: new Date().toISOString(),
+                connectionTest: {
+                    status: isConnected ? 'connected' : 'failed',
+                    timeMs: verifyTime,
+                    timeSec: (verifyTime / 1000).toFixed(2)
+                },
+                sendTest: sendTest ? {
+                    status: sendTest.success ? 'sent' : 'failed',
+                    timings: sendTest.timings,
+                    error: sendTest.error
+                } : 'skipped (add ?email=your@email.com to test actual sending)',
                 config: {
                     host: process.env.EMAIL_HOST,
                     port: process.env.EMAIL_PORT,
                     user: process.env.EMAIL_USER,
                     hasPassword: !!process.env.EMAIL_PASSWORD
-                }
+                },
+                totalTimeMs: totalTime,
+                totalTimeSec: (totalTime / 1000).toFixed(2)
             },
-            isConnected ? 'Email service is working!' : 'Email service connection failed'
+            isConnected ? 'Email service test completed' : 'Email service connection failed'
         ).send(res);
     } catch (error) {
         new SuccessResponse(

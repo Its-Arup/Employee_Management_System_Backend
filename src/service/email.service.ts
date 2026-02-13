@@ -35,13 +35,94 @@ export class EmailService {
      * Verify SMTP connection
      */
     async verifyConnection(): Promise<boolean> {
+        const startTime = Date.now();
         try {
+            logger.info('🔍 Testing SMTP connection...', {
+                meta: {
+                    host: ENV.EMAIL_HOST,
+                    port: ENV.EMAIL_PORT,
+                    user: ENV.EMAIL_USER
+                }
+            });
+            
             await this.transporter.verify();
-            logger.info('SMTP connection verified successfully');
+            const timeTaken = Date.now() - startTime;
+            
+            logger.info('✅ SMTP connection verified successfully', {
+                meta: {
+                    timeMs: timeTaken,
+                    timeSec: (timeTaken / 1000).toFixed(2)
+                }
+            });
             return true;
         } catch (error) {
-            logger.error('SMTP connection verification failed', { meta: error });
+            const timeTaken = Date.now() - startTime;
+            logger.error('❌ SMTP connection verification failed', { 
+                meta: { 
+                    error,
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                    timeMs: timeTaken,
+                    timeSec: (timeTaken / 1000).toFixed(2)
+                } 
+            });
             return false;
+        }
+    }
+
+    /**
+     * Send a simple test email to diagnose timing issues
+     */
+    async sendTestEmail(toEmail: string): Promise<{ success: boolean; timings: any; error?: string }> {
+        const timings = {
+            start: Date.now(),
+            prepareComplete: 0,
+            sendComplete: 0,
+            total: 0
+        };
+
+        try {
+            logger.info('🧪 Sending test email...', { meta: { toEmail } });
+
+            const mailOptions = {
+                from: `"${ENV.EMAIL_FROM_NAME}" <${ENV.EMAIL_FROM}>`,
+                to: toEmail,
+                subject: 'Test Email - Employee Management System',
+                text: 'This is a test email to verify SMTP configuration and measure send time.'
+            };
+
+            timings.prepareComplete = Date.now() - timings.start;
+            logger.info('📝 Test mail options prepared', { meta: { elapsedMs: timings.prepareComplete } });
+
+            const info = await this.transporter.sendMail(mailOptions);
+            timings.sendComplete = Date.now() - timings.start;
+            timings.total = timings.sendComplete;
+
+            logger.info('✅ Test email sent successfully', {
+                meta: {
+                    messageId: info.messageId,
+                    response: info.response,
+                    timings: {
+                        prepareMs: timings.prepareComplete,
+                        sendMs: timings.sendComplete,
+                        totalSec: (timings.total / 1000).toFixed(2)
+                    }
+                }
+            });
+
+            return { success: true, timings };
+        } catch (error) {
+            timings.total = Date.now() - timings.start;
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            
+            logger.error('❌ Test email failed', {
+                meta: {
+                    error,
+                    errorMessage,
+                    timings: { totalMs: timings.total, totalSec: (timings.total / 1000).toFixed(2) }
+                }
+            });
+
+            return { success: false, timings, error: errorMessage };
         }
     }
 
@@ -49,6 +130,19 @@ export class EmailService {
      * Send email verification OTP
      */
     async sendVerificationEmail(email: string, displayName: string, otp: string): Promise<void> {
+        const startTime = Date.now();
+        logger.info('📧 Starting email send process', {
+            meta: {
+                email,
+                timestamp: new Date().toISOString(),
+                config: {
+                    host: ENV.EMAIL_HOST,
+                    port: ENV.EMAIL_PORT,
+                    user: ENV.EMAIL_USER
+                }
+            }
+        });
+
         const mailOptions = {
             from: `"${ENV.EMAIL_FROM_NAME}" <${ENV.EMAIL_FROM}>`,
             to: email,
@@ -93,21 +187,38 @@ export class EmailService {
             `
         };
 
+        logger.info('📝 Mail options prepared, calling sendMail...', {
+            meta: {
+                email,
+                elapsedMs: Date.now() - startTime
+            }
+        });
+
         try {
             const info = await this.transporter.sendMail(mailOptions);
-            logger.info('Verification email sent successfully', { 
+            const totalTime = Date.now() - startTime;
+            
+            logger.info('✅ Verification email sent successfully', { 
                 meta: { 
                     email, 
                     messageId: info.messageId,
-                    response: info.response 
+                    response: info.response,
+                    totalTimeMs: totalTime,
+                    totalTimeSec: (totalTime / 1000).toFixed(2)
                 } 
             });
         } catch (error) {
-            logger.error('Error sending verification email', { 
+            const totalTime = Date.now() - startTime;
+            
+            logger.error('❌ Error sending verification email', { 
                 meta: { 
                     error, 
                     email,
-                    errorMessage: error instanceof Error ? error.message : 'Unknown error'
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                    errorCode: (error as any)?.code,
+                    errorCommand: (error as any)?.command,
+                    totalTimeMs: totalTime,
+                    totalTimeSec: (totalTime / 1000).toFixed(2)
                 } 
             });
             throw new Error(`Failed to send verification email: ${error instanceof Error ? error.message : 'Unknown error'}`);
