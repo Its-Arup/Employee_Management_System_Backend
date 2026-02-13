@@ -34,7 +34,12 @@ export abstract class ApiError extends Error {
                 return new ForbiddenResponse(err.message).send(res);
             case ErrorType.BAD_REQUEST:
                 return new BadRequestErrorResponse(err.message).send(res);
+            case ErrorType.INTERNAL:
+                // For internal errors, pass through the message in production if it's user-friendly
+                // This allows us to provide specific feedback for issues like email failures
+                return new InternalErrorResponse(err.message).send(res);
             default: {
+                // For unknown error types, hide details in production
                 let message = err.message;
                 if (ENV.ENVIORNMENT === ApplicationEnvironment.PRODUCTION) message = 'Something wrong happened.';
                 return new InternalErrorResponse(message).send(res);

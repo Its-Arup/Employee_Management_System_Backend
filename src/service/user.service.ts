@@ -46,19 +46,52 @@ export class UserService {
 
         // Send verification email - await it to ensure it's sent
         try {
+            logger.info('Attempting to send verification email', { 
+                meta: { 
+                    email: user.email,
+                    emailHost: process.env.EMAIL_HOST,
+                    emailPort: process.env.EMAIL_PORT,
+                    emailUser: process.env.EMAIL_USER,
+                    hasEmailPassword: !!process.env.EMAIL_PASSWORD
+                } 
+            });
             await emailService.sendVerificationEmail(user.email, user.displayName, emailVerificationOTP);
             logger.info('Verification email sent successfully', { meta: { email: user.email } });
         } catch (error) {
-            logger.error('Failed to send verification email', { 
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorCode = (error as any)?.code;
+            const errorCommand = (error as any)?.command;
+            
+            logger.error('Failed to send verification email - DETAILED ERROR', { 
                 meta: { 
                     error, 
+                    errorMessage,
+                    errorCode,
+                    errorCommand,
                     email: user.email,
-                    userId: user._id 
+                    userId: user._id,
+                    emailConfig: {
+                        host: process.env.EMAIL_HOST,
+                        port: process.env.EMAIL_PORT,
+                        user: process.env.EMAIL_USER,
+                        hasPassword: !!process.env.EMAIL_PASSWORD
+                    }
                 } 
             });
+            
             // Delete the user if email fails to send
             await userModel.findByIdAndDelete(user._id);
-            throw new InternalError('Failed to send verification email. Please check your email configuration or try again later.');
+            
+            // Provide specific error messages based on error type
+            if (errorMessage.includes('Invalid login') || errorMessage.includes('Username and Password not accepted')) {
+                throw new InternalError('Email authentication failed. The Gmail App Password might be incorrect. Please contact support.');
+            } else if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
+                throw new InternalError('Email service timeout. Please try again in a few moments.');
+            } else if (errorCode === 'ECONNREFUSED' || errorCode === 'ENOTFOUND') {
+                throw new InternalError('Cannot connect to email server. Please contact support.');
+            } else {
+                throw new InternalError(`Failed to send verification email: ${errorMessage}. Please try again or contact support.`);
+            }
         }
 
         // Create audit log

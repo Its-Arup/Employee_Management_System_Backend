@@ -4,7 +4,7 @@ import { io, onConnection } from './socket';
 import { connectDB } from './config';
 import { logger } from './util';
 import { initRateLimiter } from './config/rateLimiter.config';
-import { keepAliveService } from './service';
+import { keepAliveService, emailService } from './service';
 import mongoose from 'mongoose';
 
 io.on('connection', onConnection);
@@ -13,6 +13,21 @@ app.listen(ENV.PORT, () => {
         try {
             await connectDB();
             initRateLimiter(mongoose.connection);
+            
+            // Verify email service connection
+            logger.info('Verifying email service connection...');
+            const emailConnected = await emailService.verifyConnection();
+            if (!emailConnected) {
+                logger.warn('⚠️  Email service connection failed! Registration will not work properly. Check your email configuration.');
+                logger.warn('Email Config Check:', {
+                    meta: {
+                        EMAIL_HOST: process.env.EMAIL_HOST,
+                        EMAIL_PORT: process.env.EMAIL_PORT,
+                        EMAIL_USER: process.env.EMAIL_USER,
+                        HAS_EMAIL_PASSWORD: !!process.env.EMAIL_PASSWORD
+                    }
+                });
+            }
             
             // Start keep-alive service for Render free tier
             keepAliveService.start();
